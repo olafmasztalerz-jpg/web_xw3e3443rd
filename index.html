@@ -162,6 +162,43 @@
   @media (max-width:840px){ .hero-visual{min-height:200px;} .sticker{width:52px; height:52px;} }
 
   /* ---------- SLIDER ZDJĘĆ (przesuwane zdjęcia stoiska) ---------- */
+  .cookie-wrap{position:fixed; left:22px; bottom:22px; z-index:3000;}
+  @media (max-width:480px){ .cookie-wrap{left:16px; bottom:16px;} }
+
+  .cookie-float{
+    width:52px; height:52px; border-radius:50%;
+    background:var(--forest); border:none; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 8px 18px rgba(0,0,0,0.35);
+    transition:transform .18s ease, filter .18s ease;
+  }
+  .cookie-float:hover{ filter:brightness(1.1); transform:scale(1.06); }
+  .cookie-float svg{ width:26px; height:26px; }
+  @media (max-width:480px){ .cookie-float{ width:48px; height:48px; } .cookie-float svg{ width:23px; height:23px; } }
+
+  .cookie-banner{
+    position:absolute; left:0; bottom:64px; z-index:3000;
+    width:290px; max-width:calc(100vw - 44px);
+    background:var(--cream); color:var(--text);
+    border:1px solid var(--line); border-radius:10px;
+    box-shadow:0 10px 24px rgba(0,0,0,0.28);
+    padding:16px 18px;
+    opacity:0; transform:translateY(12px) scale(0.97); pointer-events:none;
+    transition:opacity .22s ease, transform .22s ease;
+  }
+  .cookie-banner.show{ opacity:1; transform:translateY(0) scale(1); pointer-events:auto; }
+  .cookie-banner p{ margin:0 0 12px; font-size:13.5px; line-height:1.5; color:var(--text); }
+  .cookie-banner-actions{ display:flex; gap:8px; flex-wrap:wrap; }
+  .cookie-banner-actions button{ font-family:inherit; cursor:pointer; white-space:nowrap; }
+  .cookie-accept-btn{
+    font-size:13px; padding:9px 16px; border:2px solid var(--forest); background:var(--forest);
+    color:#faf6ea; border-radius:2px; font-weight:600;
+  }
+  .cookie-reject-btn{
+    font-size:13px; padding:9px 16px; border:2px solid var(--line); background:none;
+    color:var(--text); border-radius:2px;
+  }
+
   .foto-slider{padding:38px 0 44px; background:var(--cream); position:relative;}
   .slider-wrap{max-width:1000px; margin:0 auto; padding:0 28px;}
   .slider-frame{
@@ -809,19 +846,7 @@
         </div>
       </div>
 
-      <!-- Zgoda na wczytanie wtyczki Facebooka (ładuje pliki cookie Facebooka dopiero po kliknięciu) -->
-      <div id="fb-consent" style="margin-top:14px; padding-top:14px; border-top:1px solid var(--line);
-        font-size:12.5px; color:#5c5340; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-        <span style="flex:1; min-width:200px;">Chcesz zobaczyć tu nasze najnowsze posty na żywo? Wczytanie wtyczki
-        Facebooka ustawi jego pliki cookie (Meta Platforms).</span>
-        <button type="button" onclick="loadFbWidget(this)"
-          style="font-size:12.5px; padding:7px 16px; border:2px solid var(--forest); background:none;
-          color:var(--forest); border-radius:2px; cursor:pointer; font-family:inherit; white-space:nowrap;">
-          Pokaż posty z Facebooka
-        </button>
-      </div>
-
-      <!-- Tu wstrzykiwana jest oficjalna wtyczka FB po zgodzie -->
+      <!-- Tu wstrzykiwana jest oficjalna wtyczka FB po zgodzie z bannera cookies -->
       <div id="fb-widget-container" style="display:none; margin-top:14px;"></div>
     </div>
 
@@ -831,8 +856,11 @@
 <script>
 function loadFbWidget(btn){
   localStorage.setItem('fbConsent', '1');
-  document.getElementById('fb-fallback').style.display = 'none';
-  document.getElementById('fb-consent').style.display = 'none';
+  if (!localStorage.getItem('cookieConsent')) localStorage.setItem('cookieConsent', 'accepted');
+  var banner = document.getElementById('cookieBanner');
+  if (banner) banner.classList.remove('show');
+  var fallbackEl = document.getElementById('fb-fallback');
+  if (fallbackEl) fallbackEl.style.display = 'none';
 
   var container = document.getElementById('fb-widget-container');
   container.style.display = 'block';
@@ -844,23 +872,87 @@ function loadFbWidget(btn){
     '<blockquote cite="https://www.facebook.com/profile.php?id=61584822705937" class="fb-xfbml-parse-ignore">' +
     '<a href="https://www.facebook.com/profile.php?id=61584822705937">Dworcowy Ogródek</a></blockquote></div>';
 
+  function restoreFallbackOnFailure(){
+    // Jeśli po kilku sekundach wtyczka FB nic nie wyrenderowała (np. zablokowana
+    // przez przeglądarkę/adblock albo brak połączenia), nie zostawiamy pustego
+    // białego pola — wracamy do karty zapasowej.
+    var rendered = container.querySelector('iframe, .fb_iframe_widget span');
+    if (!rendered) {
+      container.style.display = 'none';
+      container.innerHTML = '';
+      if (fallbackEl) fallbackEl.style.display = 'flex';
+    }
+  }
+
   if (window.FB) {
     window.FB.XFBML.parse(container);
+    setTimeout(restoreFallbackOnFailure, 4000);
   } else {
     var s = document.createElement('script');
     s.async = true; s.defer = true; s.crossOrigin = 'anonymous';
     s.src = 'https://connect.facebook.net/pl_PL/sdk.js#xfbml=1&version=v19.0';
+    s.onerror = restoreFallbackOnFailure;
     document.body.appendChild(s);
+    setTimeout(restoreFallbackOnFailure, 6000);
   }
 }
 
-// Jeśli odwiedzający wcześniej już zgodził się na wtyczkę FB, wczytaj ją od razu.
+// Jeśli odwiedzający wcześniej już zaakceptował cookies i zgodził się na wtyczkę FB, wczytaj ją od razu.
 document.addEventListener('DOMContentLoaded', function(){
-  if (localStorage.getItem('fbConsent') === '1') {
+  if (localStorage.getItem('cookieConsent') === 'accepted' && localStorage.getItem('fbConsent') === '1') {
     var wrap = document.getElementById('fb-embed-wrap');
     if (wrap) loadFbWidget(null);
   }
 });
+
+// Baner zgody na pliki cookie — pokazuje się przy pierwszej wizycie, a stała,
+// przyklejona do ekranu ikonka (jak WhatsApp) pozwala otworzyć go ponownie w każdej chwili.
+(function(){
+  var banner = document.getElementById('cookieBanner');
+  var floatBtn = document.getElementById('cookieFloatBtn');
+  var acceptBtn = document.getElementById('cookieAcceptBtn');
+  var rejectBtn = document.getElementById('cookieRejectBtn');
+  var settingsLink = document.getElementById('cookieSettingsLink');
+  if (!banner) return;
+
+  function openBanner(){ banner.classList.add('show'); }
+  function closeBanner(){ banner.classList.remove('show'); }
+  function toggleBanner(){ banner.classList.toggle('show'); }
+
+  if (!localStorage.getItem('cookieConsent')) {
+    // pokaż baner dopiero po chwili, żeby nie wskoczył razem z pierwszym renderem
+    setTimeout(openBanner, 150);
+  }
+
+  floatBtn.addEventListener('click', toggleBanner);
+
+  document.addEventListener('click', function(e){
+    if (banner.classList.contains('show') &&
+        !banner.contains(e.target) && e.target !== floatBtn && !floatBtn.contains(e.target)) {
+      closeBanner();
+    }
+  });
+
+  acceptBtn.addEventListener('click', function(){
+    localStorage.setItem('cookieConsent', 'accepted');
+    closeBanner();
+    // akceptacja wszystkich cookies obejmuje też wtyczkę Facebooka — pokaż posty od razu
+    if (document.getElementById('fb-embed-wrap')) loadFbWidget(null);
+  });
+
+  rejectBtn.addEventListener('click', function(){
+    localStorage.setItem('cookieConsent', 'rejected');
+    localStorage.removeItem('fbConsent');
+    closeBanner();
+  });
+
+  if (settingsLink) {
+    settingsLink.addEventListener('click', function(e){
+      e.preventDefault();
+      openBanner();
+    });
+  }
+})();
 </script>
 
 <span class="torn torn-ink"></span>
@@ -914,7 +1006,27 @@ document.addEventListener('DOMContentLoaded', function(){
   <img class="seal-mini" src="data:image/jpeg;base64,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" alt="Dworcowy Ogródek — logo">© <span id="rok"></span> Dworcowy Ogródek — warzywniak, kwiaty i owoce
   <br style="display:none;" class="footer-break">
   <span style="opacity:0.7;"> · strona: </span><a href="https://maszit.pl" target="_blank" rel="noopener" style="color:rgba(250,246,234,0.75); text-decoration:underline;">MaszIT.pl</a>
+  <span style="opacity:0.7;"> · </span><a href="#" id="cookieSettingsLink" style="color:rgba(250,246,234,0.75); text-decoration:underline;">Ustawienia cookie</a>
 </footer>
+
+<div class="cookie-wrap" id="cookieWrap">
+  <div class="cookie-banner" id="cookieBanner" role="dialog" aria-live="polite" aria-label="Informacja o plikach cookie">
+    <p>Używamy plików cookie do działania strony oraz — po zgodzie — do pokazywania najnowszych postów
+    z Facebooka. Akceptujesz?</p>
+    <div class="cookie-banner-actions">
+      <button type="button" class="cookie-accept-btn" id="cookieAcceptBtn">Akceptuj wszystkie</button>
+      <button type="button" class="cookie-reject-btn" id="cookieRejectBtn">Tylko niezbędne</button>
+    </div>
+  </div>
+  <button type="button" class="cookie-float" id="cookieFloatBtn" aria-label="Ustawienia plików cookie">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 12.8A9 9 0 1 1 11.2 3a3 3 0 0 0 4.2 4.2 3 3 0 0 0 4.2 4.2c.3.4.9.9 1.4 1.4z" fill="none"/>
+      <circle cx="8.5" cy="12" r="1" fill="#fff" stroke="none"/>
+      <circle cx="12" cy="16" r="1" fill="#fff" stroke="none"/>
+      <circle cx="15.5" cy="10.5" r="1" fill="#fff" stroke="none"/>
+    </svg>
+  </button>
+</div>
 
 <div class="whatsapp-wrap" id="waWrap">
   <div class="whatsapp-popup" id="waPopup" role="dialog" aria-hidden="true">
