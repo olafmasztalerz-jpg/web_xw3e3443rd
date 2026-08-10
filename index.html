@@ -329,8 +329,8 @@
     position:absolute; bottom:4px; left:0;
     width:150px; height:auto;
     z-index:2; pointer-events:none;
-    animation: trainPass 28s linear infinite;
-    animation-delay: 3s;
+    animation: trainPass 11s linear infinite;
+    animation-delay: 0.5s;
     animation-fill-mode: backwards;
     filter: drop-shadow(0 3px 2px rgba(34,29,20,0.28));
     overflow: visible;
@@ -359,8 +359,8 @@
   .mini-train .dust-c{ animation-delay:0.56s; }
   @keyframes trainPass{
     0%      { transform: translateX(-190px) scaleX(-1); opacity:1; }
-    21%     { transform: translateX(calc(100vw + 40px)) scaleX(-1); opacity:1; }
-    21.4%   { transform: translateX(calc(100vw + 40px)) scaleX(-1); opacity:0; }
+    88%     { transform: translateX(calc(100vw + 40px)) scaleX(-1); opacity:1; }
+    88.4%   { transform: translateX(calc(100vw + 40px)) scaleX(-1); opacity:0; }
     99.9%   { transform: translateX(-190px) scaleX(-1); opacity:0; }
     100%    { transform: translateX(-190px) scaleX(-1); opacity:1; }
   }
@@ -485,21 +485,6 @@
   </div>
 </section>
 
-<section class="foto-slider">
-  <div class="slider-wrap reveal">
-    <div class="slider-frame" id="stoiskoSlider" aria-roledescription="karuzela" aria-label="Zdjęcia stoiska Dworcowy Ogródek">
-      <div class="slider-track" id="sliderTrack">
-        <img src="img/slide1.jpg" alt="Skrzynki z warzywami i owocami na stoisku Dworcowy Ogródek" loading="lazy">
-        <img src="img/slide2.jpg" alt="Wjazd na stoisko Dworcowy Ogródek przy dworcu PKP">
-        <img src="img/slide3.jpg" alt="Świąteczna wystawa owoców i warzyw na stoisku">
-        <img src="img/slide4.jpg" alt="Stoisko z warzywami i owocami w słoneczny dzień">
-      </div>
-      <button class="slider-arrow prev" id="sliderPrev" aria-label="Poprzednie zdjęcie">&#8249;</button>
-      <button class="slider-arrow next" id="sliderNext" aria-label="Następne zdjęcie">&#8250;</button>
-      <div class="slider-dots" id="sliderDots"></div>
-    </div>
-  </div>
-</section>
 
 <div class="rail-divider">
   <span class="torn torn-cream"></span>
@@ -678,6 +663,24 @@
   </svg>
 </div>
 
+
+<section class="foto-slider">
+  <div class="slider-wrap reveal">
+    <div class="slider-frame" id="stoiskoSlider" aria-roledescription="karuzela" aria-label="Zdjęcia stoiska Dworcowy Ogródek">
+      <div class="slider-track" id="sliderTrack">
+        <img src="img/slide1.jpg" alt="Skrzynki z warzywami i owocami na stoisku Dworcowy Ogródek" loading="lazy">
+        <img src="img/slide2.jpg" alt="Wjazd na stoisko Dworcowy Ogródek przy dworcu PKP">
+        <img src="img/slide3.jpg" alt="Świąteczna wystawa owoców i warzyw na stoisku">
+        <img src="img/slide4.jpg" alt="Stoisko z warzywami i owocami w słoneczny dzień">
+      </div>
+      <button class="slider-arrow prev" id="sliderPrev" aria-label="Poprzednie zdjęcie">&#8249;</button>
+      <button class="slider-arrow next" id="sliderNext" aria-label="Następne zdjęcie">&#8250;</button>
+      <div class="slider-dots" id="sliderDots"></div>
+    </div>
+  </div>
+</section>
+
+
 <section id="onas" class="onas">
   <div class="wrap onas-grid">
     <div class="reveal">
@@ -692,7 +695,6 @@
     </figure>
   </div>
 </section>
-
 <section id="galeria" class="onas" style="padding-top:8px; padding-bottom:52px;">
   <div class="wrap">
     <div class="section-head reveal">
