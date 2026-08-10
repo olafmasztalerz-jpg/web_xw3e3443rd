@@ -161,6 +161,46 @@
   .sticker.s4{bottom:0%; right:16%; transform:rotate(-8deg);}
   @media (max-width:840px){ .hero-visual{min-height:200px;} .sticker{width:52px; height:52px;} }
 
+  /* ---------- SLIDER ZDJĘĆ (przesuwane zdjęcia stoiska) ---------- */
+  .foto-slider{padding:38px 0 44px; background:var(--cream); position:relative;}
+  .slider-wrap{max-width:1000px; margin:0 auto; padding:0 28px;}
+  .slider-frame{
+    position:relative; overflow:hidden; border-radius:6px;
+    box-shadow:0 14px 30px rgba(34,29,20,0.22);
+    aspect-ratio:16/9; background:var(--ink);
+  }
+  .slider-track{
+    display:flex; height:100%; width:100%;
+    transition: transform .7s cubic-bezier(.65,0,.35,1);
+  }
+  .slider-track img{
+    flex:0 0 100%; width:100%; height:100%; object-fit:cover; display:block;
+  }
+  .slider-arrow{
+    position:absolute; top:50%; transform:translateY(-50%);
+    width:42px; height:42px; border-radius:50%; border:none;
+    background:rgba(250,246,234,0.85); color:var(--ink); cursor:pointer;
+    font-size:20px; line-height:1; display:flex; align-items:center; justify-content:center;
+    box-shadow:0 3px 8px rgba(0,0,0,0.25); transition:background .2s ease, transform .2s ease;
+    z-index:3;
+  }
+  .slider-arrow:hover{background:#fff; transform:translateY(-50%) scale(1.06);}
+  .slider-arrow.prev{left:12px;}
+  .slider-arrow.next{right:12px;}
+  .slider-dots{
+    position:absolute; bottom:14px; left:0; right:0;
+    display:flex; justify-content:center; gap:9px; z-index:3;
+  }
+  .slider-dots button{
+    width:9px; height:9px; border-radius:50%; border:1.5px solid #fff;
+    background:rgba(255,255,255,0.35); padding:0; cursor:pointer;
+    box-shadow:0 1px 3px rgba(0,0,0,0.3); transition:background .2s ease, transform .2s ease;
+  }
+  .slider-dots button.active{background:var(--mustard); transform:scale(1.15);}
+  @media (max-width:640px){
+    .slider-arrow{width:34px; height:34px; font-size:16px;}
+  }
+
   /* ---------- SECTION HEAD ---------- */
   .section-head{margin-bottom:40px;}
   .section-head .kicker{
@@ -441,6 +481,22 @@
         <path d="M15 23 Q9 21 9 15 Q9 9 15 9 Q21 9 21 15 Q21 21 15 23 Z" fill="var(--red)"/>
         <path d="M15 9 V4 M12 9 L10 5 M18 9 L20 5" stroke="var(--forest)" stroke-width="2" fill="none" stroke-linecap="round"/>
       </svg></div>
+    </div>
+  </div>
+</section>
+
+<section class="foto-slider">
+  <div class="slider-wrap reveal">
+    <div class="slider-frame" id="stoiskoSlider" aria-roledescription="karuzela" aria-label="Zdjęcia stoiska Dworcowy Ogródek">
+      <div class="slider-track" id="sliderTrack">
+        <img src="img/slide1.jpg" alt="Skrzynki z warzywami i owocami na stoisku Dworcowy Ogródek" loading="lazy">
+        <img src="img/slide2.jpg" alt="Wjazd na stoisko Dworcowy Ogródek przy dworcu PKP">
+        <img src="img/slide3.jpg" alt="Świąteczna wystawa owoców i warzyw na stoisku">
+        <img src="img/slide4.jpg" alt="Stoisko z warzywami i owocami w słoneczny dzień">
+      </div>
+      <button class="slider-arrow prev" id="sliderPrev" aria-label="Poprzednie zdjęcie">&#8249;</button>
+      <button class="slider-arrow next" id="sliderNext" aria-label="Następne zdjęcie">&#8250;</button>
+      <div class="slider-dots" id="sliderDots"></div>
     </div>
   </div>
 </section>
@@ -890,6 +946,56 @@ document.addEventListener('DOMContentLoaded', function(){
       navToggle.setAttribute('aria-expanded','false');
     });
   });
+
+  // Slajder zdjęć stoiska
+  (function(){
+    const track = document.getElementById('sliderTrack');
+    const dotsWrap = document.getElementById('sliderDots');
+    const prevBtn = document.getElementById('sliderPrev');
+    const nextBtn = document.getElementById('sliderNext');
+    if(!track) return;
+    const slides = track.children.length;
+    let index = 0;
+    let autoTimer;
+
+    for(let i=0; i<slides; i++){
+      const dot = document.createElement('button');
+      if(i===0) dot.classList.add('active');
+      dot.setAttribute('aria-label', 'Przejdź do zdjęcia ' + (i+1));
+      dot.addEventListener('click', ()=>{ goTo(i); resetAuto(); });
+      dotsWrap.appendChild(dot);
+    }
+    const dots = dotsWrap.children;
+
+    function goTo(i){
+      index = (i + slides) % slides;
+      track.style.transform = 'translateX(-' + (index * 100) + '%)';
+      [...dots].forEach((d, di)=> d.classList.toggle('active', di===index));
+    }
+    function next(){ goTo(index+1); }
+    function prev(){ goTo(index-1); }
+    function resetAuto(){
+      clearInterval(autoTimer);
+      autoTimer = setInterval(next, 4500);
+    }
+
+    nextBtn.addEventListener('click', ()=>{ next(); resetAuto(); });
+    prevBtn.addEventListener('click', ()=>{ prev(); resetAuto(); });
+
+    // przesuwanie palcem (swipe) na telefonach
+    let startX = null;
+    track.addEventListener('touchstart', e=>{ startX = e.touches[0].clientX; }, {passive:true});
+    track.addEventListener('touchend', e=>{
+      if(startX===null) return;
+      const diff = e.changedTouches[0].clientX - startX;
+      if(diff > 40) prev();
+      else if(diff < -40) next();
+      startX = null;
+      resetAuto();
+    }, {passive:true});
+
+    resetAuto();
+  })();
 
   // WhatsApp: po kliknięciu w ikonkę pokazujemy dymek z numerem i info
   const waWrap = document.getElementById('waWrap');
